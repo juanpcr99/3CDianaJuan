@@ -9,7 +9,6 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
-
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Date;
@@ -18,6 +17,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.xml.bind.DatatypeConverter;
 
+import medicion.Escritor;
 import seguridad.Certificado;
 import seguridad.Cifrado;
 
@@ -36,12 +36,14 @@ public class ClienteConSeguridad {
 	private static SecretKey llaveSimetrica;
 
 	private static final String IP = "localhost";
-	private static Certificado certificado;
-	private static X509Certificate certificadoServidor;
+	private Certificado certificado;
+	private X509Certificate certificadoServidor;
+	private Escritor medidor;
 
 	public void ejecutar(){
 		try{
 			certificado = new Certificado();
+			medidor = new Escritor();
 
 			Socket socket = null;
 			PrintWriter escritor = null;
@@ -66,7 +68,7 @@ public class ClienteConSeguridad {
 				e.printStackTrace();
 			}
 			finally {
-				System.out.println("Conexi√≥n terminada");
+				System.out.println("Conexion terminada");
 				stdIn.close();
 				escritor.close();
 				lector.close();		
@@ -79,7 +81,7 @@ public class ClienteConSeguridad {
 		}
 	}	
 
-	public static void comenzar( BufferedReader pLector, PrintWriter pEscritor) throws Exception
+	public void comenzar( BufferedReader pLector, PrintWriter pEscritor) throws Exception
 	{
 		String inputLine, outputLine;
 		String certificadoString = "";
@@ -87,6 +89,7 @@ public class ClienteConSeguridad {
 
 		pEscritor.println(HOLA);
 		System.out.println("Cliente: " + HOLA);
+		medidor.transCliente();
 
 		boolean finalizo = false;
 
@@ -94,13 +97,14 @@ public class ClienteConSeguridad {
 		{
 			switch( estado ) {
 			case 0:
-
+				medidor.getSystemCpuLoad();
 				inputLine = pLector.readLine();
 				if(inputLine != null) {
 					System.out.println("Servidor: " + inputLine);
 
 					if (inputLine.equalsIgnoreCase(OK)) 
 					{
+						medidor.transServidor();
 						outputLine = "ALGORITMOS:"+ALGS+":"+ALGA+":"+ALGHMAC;
 						estado++;
 					} 
@@ -116,20 +120,19 @@ public class ClienteConSeguridad {
 				break;
 
 			case 1:
-
+				medidor.transCliente();
 				inputLine = pLector.readLine();
 				if(inputLine != null) {
 					System.out.println("Servidor: " + inputLine);
 
 					if(inputLine.equalsIgnoreCase(OK))
 					{
+						medidor.transServidor();
 						byte[] bytes = certificado.createBytes(new Date(), new Date(), ALGA, 512, "SHA1withRSA");
 						certificadoString = toByteArrayHexa(bytes);
-
 						pEscritor.println(certificadoString);
 						System.out.println("Cliente: Certificado del cliente");	
 						estado++;
-
 					}
 					else
 					{
@@ -138,9 +141,10 @@ public class ClienteConSeguridad {
 				}
 				break;
 			case 2:
-
+				medidor.transCliente();
 				inputLine = pLector.readLine();
 				if(inputLine != null) {
+					medidor.transServidor();
 					String sCertificadoServidor = inputLine;
 					byte[] certificadoBytes = new byte['»'];
 					certificadoBytes = toByteArray(sCertificadoServidor);
@@ -148,8 +152,9 @@ public class ClienteConSeguridad {
 					InputStream in = new ByteArrayInputStream(certificadoBytes);
 					certificadoServidor =  (X509Certificate) cf.generateCertificate(in);
 					System.out.println("Servidor: Certificado del servidor");
+					medidor.transServidor();
 
-
+					medidor.empVerificacion();
 					llaveSimetrica = generateSecretKey();
 					byte[] llaveBytes = llaveSimetrica.getEncoded();
 					certificado.setLlaveSimetrica(llaveBytes);
@@ -166,25 +171,28 @@ public class ClienteConSeguridad {
 				break;
 
 			case 3:
-
+				medidor.transCliente();
 				inputLine = pLector.readLine();
 
-				if(inputLine != null)
+				if(inputLine != null){
 					System.out.println("Servidor: " + inputLine);
-
+					medidor.transServidor();
+				}
 				outputLine = OK;
 				pEscritor.println(outputLine);
 				System.out.println("Cliente: "+ outputLine);
 
 				//Cifrar datos	
 				String sDatos = new String("15;41 24.2028,2 10.4418");
-
+				medidor.terVerificacion();
 				byte[] datos = sDatos.getBytes();
 				byte[] cifrarDatos = Cifrado.cifrarLS(certificado.getLlaveSimetrica(), datos);
 				String datosCifrada = toByteArrayHexa(cifrarDatos);
 				outputLine = datosCifrada;
+				medidor.empRespuesta();
 				pEscritor.println(outputLine);
 				System.out.println("Cliente(Cifrado llave simetrica): " + outputLine);
+				medidor.transCliente();
 
 				//Hash
 				byte[] hash = Cifrado.getKeyDigest(datos, certificado.getLlaveSimetrica());
@@ -192,20 +200,28 @@ public class ClienteConSeguridad {
 				outputLine = hashDatos;
 				pEscritor.println(outputLine);
 				System.out.println("Cliente(Cifrado HMAC): " + outputLine);
+				medidor.transCliente();
 
 				estado++;
 
-				if((inputLine = pLector.readLine()) != null)
+				if((inputLine = pLector.readLine()) != null){
 					System.out.println("Servidor: "+inputLine);
-
+					medidor.terRespuesta();
+					medidor.transServidor();
+				}
 				finalizo=true;
 
 				break;
 			default:
+				if(finalizo != true){
+					medidor.registrarFallo();
+				}
 				estado = -1;
 				break;
 			}
 		}		
+		
+		medidor.escribirResultado();
 	}
 
 	private static byte[] toByteArray(String cert) {

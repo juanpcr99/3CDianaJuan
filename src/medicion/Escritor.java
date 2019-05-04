@@ -34,36 +34,36 @@ public class Escritor {
 		falla = false;
 	}
 
-	public void startVerificacion() {
+	public void empVerificacion() {
 
 		verificacion = System.nanoTime();
 	}
 
-	public void finishVerificacion() {
+	public void terVerificacion() {
 
 		verificacion = System.nanoTime() - verificacion;
 	}
 	
-	public void startRespuesta() {
+	public void empRespuesta() {
 
 		respuesta = System.nanoTime();
 	}
 
-	public void finishRespuesta() {
+	public void terRespuesta() {
 		respuesta = System.nanoTime() - respuesta;
 	}
 
-	public void transaccionesCliente() {
+	public void transCliente() {
 
 		tCliente ++;
 	}
 
-	public void transaccionesServidor() {
+	public void transServidor() {
 
 		tServidor ++;
 	}
 
-	public void transaccionesTotales()
+	public void transTotales()
 	{
 		perdidas = Math.abs(tCliente - tServidor);
 	}
@@ -73,19 +73,20 @@ public class Escritor {
 		falla = true;
 	}
 
-	public void getSystemCpuLoad() throws Exception {
-		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-		ObjectName name = ObjectName.getInstance("java.lang:type=OperatingSystem");
-		AttributeList list = mbs.getAttributes(name, new String[]{ "SystemCpuLoad" });
-		if (list.isEmpty()) cpuLoad = Double.NaN;
-		Attribute att = (Attribute)list.get(0);
-		Double value = (Double)att.getValue();
-		// usually takes a couple of seconds before we get real values
-		if (value == -1.0) cpuLoad = Double.NaN;
-		// returns a percentage value with 1 decimal point precision
-		cpuLoad = ((int)(value * 1000) / 10.0);
+	public double getSystemCpuLoad() throws Exception {
+		 MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+		 ObjectName name = ObjectName.getInstance("java.lang:type=OperatingSystem");
+		 AttributeList list = mbs.getAttributes(name, new String[]{ "SystemCpuLoad" });
+		 if (list.isEmpty()) return Double.NaN;
+		 Attribute att = (Attribute)list.get(0);
+		 Double value = (Double)att.getValue();
+		 // usually takes a couple of seconds before we get real values
+		 if (value == -1.0) return Double.NaN;
+		 // returns a percentage value with 1 decimal point precision
+		 cpuLoad = ((int)(value * 1000) / 10.0);
+		 return cpuLoad;
 	}
-
+	
 	public void escribirResultado() {
 
 		File archivo = null;
@@ -97,7 +98,6 @@ public class Escritor {
 		String cpu="";
 		String perdi="";
 		String estado="";
-		
 		String pool="8";
 		String carga="400";//400 80		
 
@@ -106,7 +106,8 @@ public class Escritor {
 			// Apertura del fichero y creacion de BufferedReader para poder
 			// hacer una lectura comoda (disponer del metodo readLine()).
 			int iteracion=1;
-			while(iteracion<=10){
+			while(iteracion<=10)
+			{
 				archivo = new File ("./data/ConSeguridad/Pool"+pool+"/Carga"+carga+"/iteracion"+iteracion+"/PruebaCompleta.txt");
 				fr = new FileReader (archivo);
 				br = new BufferedReader(fr);
