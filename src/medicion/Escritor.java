@@ -108,14 +108,15 @@ public class Escritor {
 			int iteracion=1;
 			while(iteracion<=10)
 			{
-				archivo = new File ("./data/ConSeguridad/Pool"+pool+"/Carga"+carga+"/iteracion"+iteracion+"/PruebaCompleta.txt");
+				archivo = new File ("./docs/PruebaCompleta.txt");
+				
 				fr = new FileReader (archivo);
 				br = new BufferedReader(fr);
 
 				// Lectura del fichero
 				String linea;
 				int i=0;
-				PrintWriter pw = new PrintWriter("./data/Pool"+pool+"Carga"+carga+"Iter"+iteracion+".txt", "UTF-8");
+				PrintWriter pw = new PrintWriter("./docs/Pool"+pool+"Carga"+carga+"Iter"+iteracion+".txt", "UTF-8");
 				pw.println("Pool:Carga:Iteracion:verificacion:respuesta:cpu:perdida:estado");
 				System.out.println("Pool:Carga:Iteracion:verificacion:respuesta:cpu:perdida:estado");
 				while(i < 5 && (linea=br.readLine())!=null){
@@ -133,7 +134,8 @@ public class Escritor {
 						System.out.println("Algo paso pendejo");
 					}
 					i++;
-					if(i==5){
+					System.out.println("Este es mi i: "+i);
+					if(i==5 ){
 						i=0;
 						pw.println(pool+":"+carga+":"+iteracion+":"+verifi+":"+respue+":"+cpu+":"+perdi+":"+estado);
 						System.out.println(pool+":"+carga+":"+iteracion+":"+verifi+":"+respue+":"+cpu+":"+perdi+":"+estado);

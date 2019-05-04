@@ -49,7 +49,7 @@ public class ClienteSinSeguridad {
 			BufferedReader lector = null;
 
 			try	{
-				socket = new Socket(IP, 8082);
+				socket = new Socket(IP, 8086);
 				escritor = new PrintWriter(socket.getOutputStream(), true);
 				lector = new BufferedReader(new InputStreamReader(socket.getInputStream()));		
 			}
