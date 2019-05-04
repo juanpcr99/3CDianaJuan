@@ -67,7 +67,7 @@ public class ClienteSinSeguridad {
 				e.printStackTrace();
 			}
 			finally {
-				System.out.println("Conexión terminada");
+				System.out.println("Conexion terminada");
 				stdIn.close();
 				escritor.close();
 				lector.close();		
