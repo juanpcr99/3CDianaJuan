@@ -13,7 +13,7 @@ Para correr la solución sin seguridad, primero correr servidor sin seguridad y 
 
 
 
-Los resultados de las pruebas estan en la carpeta Data.
+Los resultados de las pruebas estan en la carpeta Data, al igual que el informe.
 
 Diana Camila Cepeda P.
 Juan Pablo Carreño R.
